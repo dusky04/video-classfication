@@ -3,3 +3,4 @@ dataset
 zipped-data
 .ipynb_checkpoints
 .mypy_cache
+__pycache__

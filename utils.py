@@ -30,7 +30,7 @@ def unzip_files(path: str, dataset_name: str) -> None:
     print(f"All files unzipped to: `{dataset_path.absolute()}`")
 
 
-def get_classes(root_dir: str) -> Tuple[List[str], Dict[str, int]]:
+def get_classes(root_dir: Path) -> Tuple[List[str], Dict[str, int]]:
     class_names = sorted(
         [entry.name for entry in list(os.scandir(root_dir)) if entry.is_dir()]
     )
@@ -56,13 +56,11 @@ def move_files(files: List[Path], destination: Path) -> None:
 
 
 def create_and_populate_train_test_dirs(
-    from_dir: str,
-    to_dir: str,
+    from_dir: Path,
+    to_dir: Path,
     train_ratio: float,
     samples_per_class: int,
 ) -> None:
-    from_dir = Path(from_dir)
-    to_dir = Path(to_dir)
     train_dir = to_dir / "train"
     test_dir = to_dir / "test"
 
@@ -95,9 +93,11 @@ def create_and_populate_train_test_dirs(
 
 
 def setup_dataset_structure(
-    from_dir: str, to_dir: str, train_ratio: float, samples_per_class: int
+    from_dir: Path,
+    to_dir: Path,
+    train_ratio: float,
+    samples_per_class: int,
 ) -> None:
-    from_dir: Path = Path(from_dir)
     if not from_dir.exists():
         print(f"Dataset Path: {from_dir} does not exist")
         return
