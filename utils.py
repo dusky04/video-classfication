@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 from zipfile import ZipFile
 
-
 # CricShot10/
 #     train/
 #         flick/
@@ -12,6 +11,7 @@ from zipfile import ZipFile
 #             ...
 
 
+# Unzips all .zip files from the given path into a new dataset directory.
 def unzip_files(path: str, dataset_name: str) -> None:
     zip_path = Path(path)
     if not zip_path.exists():
@@ -30,6 +30,7 @@ def unzip_files(path: str, dataset_name: str) -> None:
     print(f"All files unzipped to: `{dataset_path.absolute()}`")
 
 
+# Returns a sorted list of class names and a mapping from class name to index.
 def get_classes(root_dir: Path) -> Tuple[List[str], Dict[str, int]]:
     class_names = sorted(
         [entry.name for entry in list(os.scandir(root_dir)) if entry.is_dir()]
@@ -42,6 +43,7 @@ def get_classes(root_dir: Path) -> Tuple[List[str], Dict[str, int]]:
     return class_names, class_to_idx
 
 
+# Creates subfolders for each label inside the given path.
 def create_label_folders(path: Path, labels: List[str]) -> None:
     assert path.exists(), f"Provided path: {path} does not exist."
     # Create the label folders
@@ -49,12 +51,14 @@ def create_label_folders(path: Path, labels: List[str]) -> None:
         Path.mkdir(path / label, exist_ok=True)
 
 
+# Moves a list of files to the specified destination directory.
 def move_files(files: List[Path], destination: Path) -> None:
     for file in files:
         file_dest_path = destination / file.name
         os.rename(file, file_dest_path)
 
 
+# Splits video files from each class into train and test directories.
 def create_and_populate_train_test_dirs(
     from_dir: Path,
     to_dir: Path,
@@ -79,7 +83,7 @@ def create_and_populate_train_test_dirs(
             )
         video_files = video_files[:samples_per_class]
 
-        # Create train and test sets
+        # create train and test sets
         train_videos, test_videos = (
             video_files[:train_sample_count],
             video_files[train_sample_count:],
@@ -92,6 +96,7 @@ def create_and_populate_train_test_dirs(
         move_files(test_videos, test_class_dir)
 
 
+# Sets up the directory structure for the dataset and splits data into train/test.
 def setup_dataset_structure(
     from_dir: Path,
     to_dir: Path,
@@ -104,7 +109,7 @@ def setup_dataset_structure(
 
     print(f"Found dataset at: {from_dir}")
 
-    # Create root directory
+    # creating root directory
     root_dir = Path(to_dir)
     print(f"LOG: Creating directory '{root_dir}'")
     Path.mkdir(root_dir, exist_ok=True)
@@ -112,7 +117,7 @@ def setup_dataset_structure(
     train_dir = root_dir / "train"
     test_dir = root_dir / "test"
 
-    # Get all class names
+    # get all class names
     labels, _ = get_classes(from_dir)
 
     Path.mkdir(train_dir, exist_ok=True)
