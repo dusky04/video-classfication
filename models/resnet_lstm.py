@@ -3,7 +3,7 @@ from torch import nn
 from torchvision.models import ResNet, resnet18
 
 
-class CNNLSTModel(nn.Module):
+class ResnetLSTModel(nn.Module):
     def __init__(
         self,
         feature_extractor_model: ResNet,
@@ -59,15 +59,15 @@ class CNNLSTModel(nn.Module):
         return output
 
 
-def build_cnn_lstm_model(
+def build_resnet_lstm_model(
     hidden_dim: int, num_lstm_layers: int, num_classes: int
-) -> CNNLSTModel:
+) -> ResnetLSTModel:
     resnet: ResNet = resnet18(weights="DEFAULT")
     # freeze all the parameters
     for param in resnet.parameters():
         param.requires_grad = False
 
-    return CNNLSTModel(
+    return ResnetLSTModel(
         feature_extractor_model=resnet,
         hidden_dim=hidden_dim,
         num_lstm_layers=num_lstm_layers,

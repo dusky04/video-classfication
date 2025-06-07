@@ -2,7 +2,7 @@ from pathlib import Path
 
 import torch
 from torch import nn
-from models.cnn_lstm import build_cnn_lstm_model, CNNLSTModel
+from models.resnet_lstm import build_resnet_lstm_model, ResnetLSTModel
 from dataset import build_dataset, CricShot
 from config import Config
 from torch.utils.tensorboard import SummaryWriter
@@ -25,7 +25,7 @@ def train_model(config: Config):
     # setup tensorboard
     writer: SummaryWriter = SummaryWriter(config.EXPERIMENT_NAME)
 
-    model: CNNLSTModel = build_cnn_lstm_model(
+    model: ResnetLSTModel = build_resnet_lstm_model(
         hidden_dim=config.LSTM_HIDDEN_DIM,
         num_lstm_layers=config.LSTM_NUM_LAYERS,
         num_classes=config.NUM_CLASSES,

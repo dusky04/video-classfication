@@ -1,1 +1,2 @@
-from .cnn_lstm import build_cnn_lstm_model, CNNLSTModel
+from .resnet_lstm import build_resnet_lstm_model, ResnetLSTModel
+from .vgg_lstm import build_vgg_lstm_model, VGGLSTModel
