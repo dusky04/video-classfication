@@ -1,4 +1,5 @@
 import os
+import random
 from pathlib import Path
 from typing import Dict, List, Tuple
 from zipfile import ZipFile
@@ -12,8 +13,7 @@ from zipfile import ZipFile
 
 
 # Unzips all .zip files from the given path into a new dataset directory.
-def unzip_files(path: str, dataset_name: str) -> None:
-    zip_path = Path(path)
+def unzip_files(zip_path: Path, dataset_name: str) -> None:
     if not zip_path.exists():
         raise FileNotFoundError(f"Directory does not exist: {zip_path}")
 
@@ -77,6 +77,7 @@ def create_and_populate_train_test_dirs(
     all_class_dirs = from_dir.glob("*")
     for class_dir in all_class_dirs:
         video_files = list(class_dir.glob("*.avi"))
+        random.shuffle(video_files)
         if len(video_files) < samples_per_class:
             print(
                 f"Warning: Only found {len(video_files)} videos in {class_dir}, expected {samples_per_class}."
