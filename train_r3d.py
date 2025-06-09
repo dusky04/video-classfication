@@ -2,7 +2,7 @@ from pathlib import Path
 
 import torch
 from torch import nn
-from models.resnet_lstm import build_resnet_lstm_model, ResnetLSTModel
+from torchvision.models.video import r3d_18
 from dataset import build_dataset, CricShot
 from config import Config
 from torch.utils.tensorboard import SummaryWriter
@@ -25,11 +25,10 @@ def train_model(config: Config):
     # setup tensorboard
     writer: SummaryWriter = SummaryWriter(config.EXPERIMENT_NAME)
 
-    model: ResnetLSTModel = build_resnet_lstm_model(
-        hidden_dim=config.LSTM_HIDDEN_DIM,
-        num_lstm_layers=config.LSTM_NUM_LAYERS,
-        num_classes=config.NUM_CLASSES,
-    ).to(device)
+    model = r3d_18()
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Linear(num_ftrs, config.NUM_CLASSES)
+    model.to(device)
 
     loss_fn = nn.CrossEntropyLoss().to(device)
 
@@ -37,18 +36,8 @@ def train_model(config: Config):
         model.parameters(), lr=config.LR, weight_decay=config.WEIGHT_DECAY
     )
     # TODO: Add lr scheduler
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    #     optimizer, mode="max", patience=3, factor=0.5
-    # )
-    scheduler = torch.optim.lr_scheduler.SequentialLR(
-        optimizer,
-        [
-            torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10),
-            torch.optim.lr_scheduler.ReduceLROnPlateau(
-                optimizer, mode="max", patience=2, factor=0.5
-            ),
-        ],
-        milestones=[20],
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode="max", patience=3, factor=0.5
     )
 
     # training loop
@@ -61,7 +50,7 @@ def train_model(config: Config):
             train_dataloader, desc=f"Processing Epoch: {epoch + 1:02d}"
         )
         for batch_idx, (videos, labels) in enumerate(batch_iterator):
-            videos = videos.to(device)
+            videos = videos.permute(0, 2, 1, 3, 4).to(device)
             labels = labels.to(device)
             optimizer.zero_grad()
             outputs = model(videos)
@@ -110,7 +99,7 @@ def train_model(config: Config):
         val_epoch_acc = 100.0 * val_correct / val_total if val_total > 0 else 0
         writer.add_scalar("Loss/val", val_epoch_loss, epoch)
         writer.add_scalar("Accuracy/val", val_epoch_acc, epoch)
-        scheduler.step()
+        scheduler.step(val_epoch_acc)
 
         print(
             f"Epoch {epoch + 1}/{config.NUM_EPOCHS} | Train Loss: {epoch_loss:.4f} | Train Acc: {epoch_acc:.2f}% | Val Loss: {val_epoch_loss:.4f} | Val Acc: {val_epoch_acc:.2f}%"

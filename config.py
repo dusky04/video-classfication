@@ -18,7 +18,7 @@ def get_config() -> Dict[str, Any]:
 
 @dataclass
 class Config:
-    NUM_FRAMES: int = 16
+    NUM_FRAMES: int = 32
     EXPERIMENT_NAME: str = "CNN-LSTM-Model"
     FRAME_SIZE: Tuple[int, int] = (224, 224)
     DATASET_NAME: str = "CricShot10"

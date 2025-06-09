@@ -1,28 +1,19 @@
 import torch
 from torch import nn
-from torchvision.models import ResNet, resnet18
+from torchvision.models.video import r3d_18
 
 
-class ResnetLSTModel(nn.Module):
+class R3DModel(nn.Module):
     def __init__(
         self,
-        feature_extractor_model: ResNet,
-        hidden_dim: int = 256,
-        num_lstm_layers: int = 1,
         num_classes: int = 10,
         dropout: float = 0.3,
     ) -> None:
         super().__init__()
-        # we will pass in the desired model to be used as a feature extractor
-        # this time, we using ResNet18, perhaps can extend to VGG
 
-        # configure the ResNet
         # get the output size from the penultimate layer of ResNet
-        self.in_features = feature_extractor_model.fc.in_features
-        # create our own feature extractor by removing 'fc' layer
-        self.feature_extractor: nn.Module = nn.Sequential(
-            *list(feature_extractor_model.children())[:-1]
-        )
+        model = r3d_18()
+        model.fc = nn.Linear(model.fc.in_features, num_classes)
 
         self.hidden_dim: int = hidden_dim
 
@@ -31,7 +22,6 @@ class ResnetLSTModel(nn.Module):
             input_size=self.in_features,
             hidden_size=hidden_dim,
             num_layers=num_lstm_layers,
-            dropout=0.5,
             batch_first=True,
         )
 
