@@ -101,7 +101,7 @@ def train_model(
         scheduler.step()
 
         print(
-            f"Epoch {epoch + 1}/{config.NUM_EPOCHS} | Train Loss: {epoch_loss:.4f} | Train Acc: {epoch_acc:.2f}% | Val Loss: {val_epoch_loss:.4f} | Val Acc: {val_epoch_acc:.2f}% | LR: {scheduler.get_last_lr():.4f} "
+            f"Epoch {epoch + 1}/{config.NUM_EPOCHS} | Train Loss: {epoch_loss:.4f} | Train Acc: {epoch_acc:.2f}% | Val Loss: {val_epoch_loss:.4f} | Val Acc: {val_epoch_acc:.2f}%"
         )
 
         # Save model checkpoint
