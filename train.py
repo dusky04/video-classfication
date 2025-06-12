@@ -5,7 +5,7 @@ from torch import nn
 
 # from torch.amp.grad_scaler import GradScaler
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard.writer import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from config import Config
