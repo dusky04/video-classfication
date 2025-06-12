@@ -2,9 +2,10 @@ from pathlib import Path
 
 import torch
 from torch import nn
-from torch.amp.grad_scaler import GradScaler
+
+# from torch.amp.grad_scaler import GradScaler
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import tqdm
 
 from config import Config
@@ -30,7 +31,7 @@ def train_model(
     optimizer = torch.optim.Adam(
         model.parameters(), lr=config.LR, weight_decay=config.WEIGHT_DECAY
     )
-    scaler = GradScaler()
+    # scaler = GradScaler()
 
     # TODO: Add lr scheduler
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=10)
@@ -48,16 +49,18 @@ def train_model(
             videos = videos.to(device)
             labels = labels.to(device)
 
-            optimizer.zero_grad(set_to_none=True)
+            optimizer.zero_grad()
 
-            with torch.autocast(device_type="cuda"):
-                outputs = model(videos)
-                loss = loss_fn(outputs, labels)
+            # with torch.autocast(device_type="cuda"):
+            outputs = model(videos)
+            loss = loss_fn(outputs, labels)
 
-            scaler.scale(loss).backward()
+            # scaler.scale(loss).backward()
+            loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            scaler.step(optimizer)
-            scaler.update()
+            # scaler.step(optimizer)
+            optimizer.step()
+            # scaler.update()
 
             running_loss += loss.item() * videos.size(0)
             _, predicted = torch.max(outputs, 1)
