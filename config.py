@@ -12,7 +12,7 @@ class Config:
     MODEL_FOLDER = "weights"
     FRAME_SIZE = (224, 224)
     BATCH_SIZE = 10
-    NUM_CLASSES = 9
+    NUM_CLASSES = 10
     TRAIN_SIZE = 0.8
     NUM_WORKERS = min(6, os.cpu_count() or 0)
     LSTM_HIDDEN_DIM = 256
@@ -22,3 +22,4 @@ class Config:
     NUM_EPOCHS = 20
     WEIGHT_DECAY = 5e-4
     PREFETCH_FACTOR = 10
+    LSTM_DROPOUT = 0.5

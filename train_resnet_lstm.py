@@ -53,9 +53,7 @@ if __name__ == "__main__":
         config, train_transform=train_transform, test_transform=test_transform
     )
 
-    model = build_resnet_lstm_model(
-        config.LSTM_HIDDEN_DIM, config.LSTM_NUM_LAYERS, config.NUM_CLASSES
-    ).to(device)
+    model = build_resnet_lstm_model(config).to(device)
 
     # finally train the model
     train_model(

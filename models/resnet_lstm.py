@@ -2,43 +2,39 @@ import torch
 from torch import nn
 from torchvision.models import ResNet, resnet18
 
+from config import Config
+
 
 class ResnetLSTModel(nn.Module):
     def __init__(
         self,
+        config: Config,
         feature_extractor_model: ResNet,
-        hidden_dim: int = 256,
-        num_lstm_layers: int = 1,
-        num_classes: int = 10,
-        dropout: float = 0.3,
     ) -> None:
         super().__init__()
         # we will pass in the desired model to be used as a feature extractor
         # this time, we using ResNet18, perhaps can extend to VGG
-
         # configure the ResNet
         # get the output size from the penultimate layer of ResNet
         self.in_features = feature_extractor_model.fc.in_features
         # create our own feature extractor by removing 'fc' layer
-        self.feature_extractor: nn.Module = nn.Sequential(
+        self.feature_extractor = nn.Sequential(
             *list(feature_extractor_model.children())[:-1]
         )
 
-        self.hidden_dim: int = hidden_dim
-
-        # create an LSTM for temporal modelling
         self.lstm = nn.LSTM(
             input_size=self.in_features,
-            hidden_size=hidden_dim,
-            num_layers=num_lstm_layers,
-            dropout=0.5,
+            hidden_size=config.LSTM_HIDDEN_DIM,
+            num_layers=config.LSTM_NUM_LAYERS,
+            dropout=config.LSTM_DROPOUT,
             batch_first=True,
         )
 
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(config.LSTM_DROPOUT)
 
-        # final projection layer
-        self.linear = nn.Linear(in_features=hidden_dim, out_features=num_classes)
+        self.linear = nn.Linear(
+            in_features=config.LSTM_HIDDEN_DIM, out_features=config.NUM_CLASSES
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # input dim: [batch_size, frame, C, H, W]
@@ -56,21 +52,17 @@ class ResnetLSTModel(nn.Module):
 
         features = self.dropout(features)
 
-        output: torch.Tensor = self.linear(features)
+        output = self.linear(features)
         return output
 
 
-def build_resnet_lstm_model(
-    hidden_dim: int, num_lstm_layers: int, num_classes: int
-) -> ResnetLSTModel:
+def build_resnet_lstm_model(config: Config) -> ResnetLSTModel:
     resnet: ResNet = resnet18(weights="DEFAULT")
-    # freeze all the parameters
+
     for param in resnet.parameters():
         param.requires_grad = False
+    # fine tune the lower layer
+    for param in resnet.layer4.parameters():
+        param.requires_grad = True
 
-    return ResnetLSTModel(
-        feature_extractor_model=resnet,
-        hidden_dim=hidden_dim,
-        num_lstm_layers=num_lstm_layers,
-        num_classes=num_classes,
-    )
+    return ResnetLSTModel(config, feature_extractor_model=resnet)
