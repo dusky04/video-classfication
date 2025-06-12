@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 from torchvision import transforms
 
@@ -18,7 +20,7 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    if not config.TO_DIR.exists():
+    if not Path(config.DATASET_NAME).exists():
         download_dataset(config.DOWNLOAD_DIR, DATA_LINKS[config.DATASET_NAME])
         unzip_files(config.DOWNLOAD_DIR, config.DATASET_NAME)
 

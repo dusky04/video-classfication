@@ -54,8 +54,8 @@ def get_dataloaders(
     train_transform: transforms.Compose,
     test_transform: transforms.Compose,
 ) -> Tuple[DataLoader[CricShot], DataLoader[CricShot]]:
-    train_dir = config.TO_DIR / "train"
-    test_dir = config.TO_DIR / "test"
+    train_dir = Path(config.DATASET_NAME) / "train"
+    test_dir = Path(config.DATASET_NAME) / "test"
 
     train_dataset = CricShot(dir=train_dir, transform=train_transform, config=config)
     test_dataset = CricShot(dir=test_dir, transform=test_transform, config=config)

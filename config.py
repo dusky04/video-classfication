@@ -17,7 +17,7 @@ class Config:
     NUM_WORKERS = min(6, os.cpu_count() or 0)
     LSTM_HIDDEN_DIM = 256
     LSTM_NUM_LAYERS = 1
-    TO_DIR = Path("dataset")
+    # TO_DIR = Path("dataset")
     LR = 1e-3
     NUM_EPOCHS = 20
     WEIGHT_DECAY = 5e-4
