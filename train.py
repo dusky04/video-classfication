@@ -33,9 +33,7 @@ def train_model(
     scaler = GradScaler()
 
     # TODO: Add lr scheduler
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="max", patience=3, factor=0.5
-    )
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=10)
 
     # training loop
     for epoch in range(config.NUM_EPOCHS):
@@ -97,10 +95,10 @@ def train_model(
         val_epoch_acc = 100.0 * val_correct / val_total if val_total > 0 else 0
         writer.add_scalar("Loss/val", val_epoch_loss, epoch)
         writer.add_scalar("Accuracy/val", val_epoch_acc, epoch)
-        scheduler.step(val_loss)
+        scheduler.step()
 
         print(
-            f"Epoch {epoch + 1}/{config.NUM_EPOCHS} | Train Loss: {epoch_loss:.4f} | Train Acc: {epoch_acc:.2f}% | Val Loss: {val_epoch_loss:.4f} | Val Acc: {val_epoch_acc:.2f}%"
+            f"Epoch {epoch + 1}/{config.NUM_EPOCHS} | Train Loss: {epoch_loss:.4f} | Train Acc: {epoch_acc:.2f}% | Val Loss: {val_epoch_loss:.4f} | Val Acc: {val_epoch_acc:.2f}% | LR: {scheduler.get_last_lr():.4f} "
         )
 
         # Save model checkpoint

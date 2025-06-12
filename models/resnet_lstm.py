@@ -22,6 +22,8 @@ class ResnetLSTModel(nn.Module):
             *list(feature_extractor_model.children())[:-1]
         )
 
+        self.batch_norm = nn.BatchNorm2d(num_features=512)
+
         self.lstm = nn.LSTM(
             input_size=self.in_features,
             hidden_size=config.LSTM_HIDDEN_DIM,
@@ -42,7 +44,8 @@ class ResnetLSTModel(nn.Module):
         # since we are passing through conv2D layers in ResNet
         # have to convert dims to [batch_size * frame, C, H, W]
         # output dims: [batch_size, 512 (in_features), 1, 1]
-        features: torch.Tensor = self.feature_extractor(x.view(B * T, C, H, W))
+        features = self.feature_extractor(x.view(B * T, C, H, W))
+        features = self.batch_norm(features)
 
         # LSTM expects (batch_size, sequence_length, input_size) as input
         features = features.view(B, T, -1)  # [batch_size, sequence_length, 512]
