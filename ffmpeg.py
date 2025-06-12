@@ -1,5 +1,5 @@
-from pathlib import Path
 import os
+from pathlib import Path
 
 # remove the scorecard from the bottom of every image
 # to reduce unnecessary noise

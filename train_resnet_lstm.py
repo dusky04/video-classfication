@@ -1,133 +1,65 @@
-from pathlib import Path
-
 import torch
-from torch import nn
-from models.resnet_lstm import build_resnet_lstm_model, ResnetLSTModel
-from dataset import build_dataset, CricShot
+from torchvision import transforms
+
 from config import Config
-from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
-from torch.utils.data import DataLoader
+from dataset import get_dataloaders
+from models.resnet_lstm import build_resnet_lstm_model
+from train import train_model
+from utils import download_dataset, unzip_files
 
-
-def train_model(config: Config):
-    # get the device to train on
-    device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("Using Device: ", device)
-
-    Path(config.MODEL_FOLDER).mkdir(parents=True, exist_ok=True)
-
-    # get the dataset
-    train_dataloader, test_dataloader = build_dataset(
-        config, download_dir=config.DOWNLOAD_DIR, to_dir=config.TO_DIR
-    )
-
-    # setup tensorboard
-    writer: SummaryWriter = SummaryWriter(config.EXPERIMENT_NAME)
-
-    model: ResnetLSTModel = build_resnet_lstm_model(
-        hidden_dim=config.LSTM_HIDDEN_DIM,
-        num_lstm_layers=config.LSTM_NUM_LAYERS,
-        num_classes=config.NUM_CLASSES,
-    ).to(device)
-
-    loss_fn = nn.CrossEntropyLoss().to(device)
-
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=config.LR, weight_decay=config.WEIGHT_DECAY
-    )
-    # TODO: Add lr scheduler
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    #     optimizer, mode="max", patience=3, factor=0.5
-    # )
-    scheduler = torch.optim.lr_scheduler.SequentialLR(
-        optimizer,
-        [
-            torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10),
-            torch.optim.lr_scheduler.ReduceLROnPlateau(
-                optimizer, mode="max", patience=2, factor=0.5
-            ),
-        ],
-        milestones=[20],
-    )
-
-    # training loop
-    for epoch in range(config.NUM_EPOCHS):
-        model.train()
-        running_loss = 0.0
-        correct = 0
-        total = 0
-        batch_iterator: tqdm[DataLoader[CricShot]] = tqdm(
-            train_dataloader, desc=f"Processing Epoch: {epoch + 1:02d}"
-        )
-        for batch_idx, (videos, labels) in enumerate(batch_iterator):
-            videos = videos.to(device)
-            labels = labels.to(device)
-            optimizer.zero_grad()
-            outputs = model(videos)
-            loss = loss_fn(outputs, labels)
-
-            loss.backward()
-
-            # prevent exploding gradients in LSTM
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-
-            optimizer.step()
-
-            running_loss += loss.item() * videos.size(0)
-            _, predicted = torch.max(outputs, 1)
-            correct += (predicted == labels).sum().item()
-            total += labels.size(0)
-
-            batch_iterator.set_postfix(
-                {
-                    "loss": loss.item(),
-                    "acc": 100.0 * correct / total if total > 0 else 0,
-                }
-            )
-
-        epoch_loss = running_loss / total if total > 0 else 0
-        epoch_acc = 100.0 * correct / total if total > 0 else 0
-        writer.add_scalar("Loss/train", epoch_loss, epoch)
-        writer.add_scalar("Accuracy/train", epoch_acc, epoch)
-
-        # Validation
-        model.eval()
-        val_loss = 0.0
-        val_correct = 0
-        val_total = 0
-        with torch.inference_mode():
-            for videos, labels in test_dataloader:
-                videos = videos.to(device)
-                labels = labels.to(device)
-                outputs = model(videos)
-                loss = loss_fn(outputs, labels)
-                val_loss += loss.item() * videos.size(0)
-                _, predicted = torch.max(outputs, 1)
-                val_correct += (predicted == labels).sum().item()
-                val_total += labels.size(0)
-        val_epoch_loss = val_loss / val_total if val_total > 0 else 0
-        val_epoch_acc = 100.0 * val_correct / val_total if val_total > 0 else 0
-        writer.add_scalar("Loss/val", val_epoch_loss, epoch)
-        writer.add_scalar("Accuracy/val", val_epoch_acc, epoch)
-        scheduler.step()
-
-        print(
-            f"Epoch {epoch + 1}/{config.NUM_EPOCHS} | Train Loss: {epoch_loss:.4f} | Train Acc: {epoch_acc:.2f}% | Val Loss: {val_epoch_loss:.4f} | Val Acc: {val_epoch_acc:.2f}%"
-        )
-
-        # Save model checkpoint
-        torch.save(
-            model.state_dict(),
-            Path(config.MODEL_FOLDER)
-            / f"{config.EXPERIMENT_NAME}_epoch{epoch + 1}.pth",
-        )
-
-    writer.close()
-    print("Training complete.")
-    return model
+DATA_LINKS = {
+    "CricShot10": "https://drive.google.com/file/d/1MOGU7xC2uw9qUmB9Zjez2sl3a2E7oFnS/view?usp=sharing",
+    "SoccerAct10": "https://drive.google.com/file/d/1vD3DqGxxuuxCZaj10dhst-4St08MECVI/view?usp=sharing",
+}
 
 
 if __name__ == "__main__":
     config = Config()
-    train_model(config)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    if not config.TO_DIR.exists():
+        download_dataset(config.DOWNLOAD_DIR, DATA_LINKS[config.DATASET_NAME])
+        unzip_files(config.DOWNLOAD_DIR, config.DATASET_NAME)
+
+    train_transform = transforms.Compose(
+        [
+            transforms.ConvertImageDtype(torch.float32),
+            transforms.RandomApply([transforms.RandomRotation(10)], p=0.3),
+            transforms.RandomApply(
+                [transforms.RandomAffine(0, translate=(0.1, 0.1))], p=0.3
+            ),
+            transforms.RandomApply([transforms.ColorJitter(0.2, 0.2, 0.2, 0.1)], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.RandomApply(
+                [transforms.GaussianBlur(kernel_size=(5, 5))], p=0.5
+            ),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
+    test_transform = transforms.Compose(
+        [
+            transforms.ConvertImageDtype(torch.float32),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225],
+            ),
+        ]
+    )
+
+    train_dataloader, test_dataloader = get_dataloaders(
+        config, train_transform=train_transform, test_transform=test_transform
+    )
+
+    model = build_resnet_lstm_model(
+        config.LSTM_HIDDEN_DIM, config.LSTM_NUM_LAYERS, config.NUM_CLASSES
+    ).to(device)
+
+    # finally train the model
+    train_model(
+        config,
+        model=model,
+        train_dataloader=train_dataloader,
+        test_dataloader=test_dataloader,
+        device=device,
+    )

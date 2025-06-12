@@ -5,13 +5,12 @@ import torch
 from transformers import (
     Trainer,
     TrainingArguments,
-    VideoMAEImageProcessor,
     VideoMAEForVideoClassification,
+    VideoMAEImageProcessor,
 )
 
 from config import Config
 from dataset import build_dataset  # your provided dataset setup
-
 
 # Load dataset
 config = Config()

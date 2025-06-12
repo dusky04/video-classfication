@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 from zipfile import ZipFile
 
+from gdown import download
+
 # CricShot10/
 #     train/
 #         flick/
@@ -13,16 +15,16 @@ from zipfile import ZipFile
 
 
 # Unzips all .zip files from the given path into a new dataset directory.
-def unzip_files(zip_path: Path, dataset_name: str) -> None:
-    if not zip_path.exists():
-        raise FileNotFoundError(f"Directory does not exist: {zip_path}")
+def unzip_files(zip_file_path: Path, dataset_name: str) -> None:
+    if not zip_file_path.exists():
+        raise FileNotFoundError(f"Directory does not exist: {zip_file_path}")
 
     dataset_path = Path(dataset_name)
     Path.mkdir(dataset_path, exist_ok=True)
     print(f"Creating directory: {dataset_path}")
 
     print("Unzipping all the files: ")
-    for zip_file_path in zip_path.glob("*.zip"):
+    for zip_file_path in zip_file_path.glob("*.zip"):
         with ZipFile(zip_file_path) as zip_file:
             print("Unzipping:", zip_file_path.name)
             zip_file.extractall(dataset_path)
@@ -135,3 +137,14 @@ def setup_dataset_structure(
         train_ratio=train_ratio,
         samples_per_class=samples_per_class,
     )
+
+
+# def download_dataset(download_dir: Path, links: List[str]):
+#     download_dir.mkdir(exist_ok=True)
+#     for idx, url in enumerate(links):
+#         download(url, output=str(download_dir / f"{idx}.zip"), fuzzy=True, quiet=True)
+
+
+def download_dataset(download_dir: Path, url: str):
+    download_dir.mkdir(exist_ok=True)
+    download(url, output=str(download_dir / "0.zip"), fuzzy=True, quiet=False)

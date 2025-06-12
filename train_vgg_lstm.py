@@ -2,12 +2,13 @@ from pathlib import Path
 
 import torch
 from torch import nn
-from models.vgg_lstm import build_vgg_lstm_model, VGGLSTModel
-from dataset import build_dataset, CricShot
-from config import Config
+from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-from torch.utils.data import DataLoader
+
+from config import Config
+from dataset import CricShot, build_dataset
+from models.vgg_lstm import VGGLSTModel, build_vgg_lstm_model
 
 
 def train_model(config: Config):
