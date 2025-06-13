@@ -34,7 +34,7 @@ def train_model(
     # scaler = GradScaler()
 
     # TODO: Add lr scheduler
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=10)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=15)
 
     # training loop
     for epoch in range(config.NUM_EPOCHS):
