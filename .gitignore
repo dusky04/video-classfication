@@ -17,6 +17,7 @@ wheels/
 # weights
 weights
 CNN-LSTM-Model
+real-weights
 
 # dataset
 zipped-data

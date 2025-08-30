@@ -5,7 +5,7 @@ from pathlib import Path
 
 @dataclass
 class Config:
-    NUM_FRAMES = 16
+    NUM_FRAMES = 32
     EXPERIMENT_NAME = "CNN-LSTM-Model"
     DATASET_NAME = "CricShot10"
     DOWNLOAD_DIR = Path("zipped-data")
